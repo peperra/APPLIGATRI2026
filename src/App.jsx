@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useFetriData } from "./useFetriData";
 
 // ── TABLAS DE PUNTOS FETRI 2026 ────────────────────────────────────────────────
 const T90 = [90,84,78,72,66,60,54,48,42,36,30,24,18,12,6];
@@ -89,7 +90,6 @@ const DIV2F = [
 ];
 
 // ── DATOS REALES J1+J2 ─────────────────────────────────────────────────────────
-// [j1_pts, j2_pts] — J1=Copa del Rey T60 (col izq), J2=Relevos T45 (col der)
 const DATOS_REALES = {
   "2M": {
     21:[27,12], 22:[40,30], 23:[48,24], 24:[6,0],  25:[56,33],
@@ -114,11 +114,11 @@ function initJornadas(equipos, divKey) {
 }
 
 // ── CLASIFICACIÓN ──────────────────────────────────────────────────────────────
-function calcClasificacion(equipos, jornadas, divKey) {
-  const datos = DATOS_REALES[divKey];
+function calcClasificacion(equipos, jornadas, divKey, liveData) {
+  const datos = liveData?.[divKey] ?? DATOS_REALES[divKey];
   return equipos.map(eq => {
     const ptsJ = JORNADAS_DEF.map((_, idx) => {
-      if (datos && idx < 2) return datos[eq.id] ? datos[eq.id][idx] : 0;
+      if (datos?.[eq.id]?.[idx] !== undefined) return datos[eq.id][idx] ?? 0;
       const pos = jornadas[idx].res[eq.id] ?? 0;
       return getPts(jornadas[idx].tipo, pos);
     });
@@ -150,19 +150,21 @@ export default function App() {
     return s;
   });
   const [editando, setEditando] = useState(null);
+  const { data: liveData, loading: liveLoading, ts: liveTs } = useFetriData();
 
   const divActual = DIVISIONES.find(d => d.key === divKey);
   const equipos   = divActual.equipos;
   const jornadas  = jornadasState[divKey];
-  const hayReales = !!DATOS_REALES[divKey];
+  const hayReales = !!(liveData?.[divKey] ?? DATOS_REALES[divKey]);
 
   const clas = useMemo(
-    () => calcClasificacion(equipos, jornadas, divKey),
-    [equipos, jornadas, divKey]
+    () => calcClasificacion(equipos, jornadas, divKey, liveData),
+    [equipos, jornadas, divKey, liveData]
   );
 
   const colsJ = JORNADAS_DEF.map((_, i) => i).filter(i => {
-    if (hayReales && i < 2) return true;
+    const datos = liveData?.[divKey] ?? DATOS_REALES[divKey];
+    if (datos && Object.values(datos).some(arr => (arr[i] ?? 0) > 0)) return true;
     return jornadas[i] && (Object.values(jornadas[i].res).some(v => v > 0) || jornadas[i].disputada);
   });
 
@@ -236,7 +238,7 @@ export default function App() {
           <>
             <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14}}>
               <span style={S.lbl}>{divActual.label.toUpperCase()} — ordenado por Total</span>
-              {hayReales && <div style={{background:"#0a1f1a", border:"1px solid #1a4a3a", borderRadius:3, padding:"3px 8px", fontSize:9, color:"#2A9D8F", letterSpacing:2}}>J1+J2 DATOS REALES</div>}
+              {hayReales && <div style={{background:"#0a1f1a", border:"1px solid #1a4a3a", borderRadius:3, padding:"3px 8px", fontSize:9, color:"#2A9D8F", letterSpacing:2}}>{liveLoading ? "CARGANDO..." : `LIVE · ${liveTs ?? ""}`.trim()}</div>}
             </div>
 
             <div style={{overflowX:"auto"}}>
