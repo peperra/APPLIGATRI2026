@@ -219,7 +219,7 @@ export default function App() {
             <button key={d.key} onClick={() => {setDivKey(d.key); setEditando(null);}}
               style={{background:divKey===d.key?"#E63946":"#111", border:`1px solid ${divKey===d.key?"#E63946":"#1c1c1c"}`, color:divKey===d.key?"#fff":"#444", fontSize:10, letterSpacing:2, padding:"4px 12px", cursor:"pointer", borderRadius:3, fontFamily:"inherit", fontWeight:700, display:"flex", alignItems:"center", gap:5}}>
               {d.label}
-              {DATOS_REALES[d.key] && <span style={{fontSize:8, background:"#2A9D8F", color:"#000", padding:"1px 4px", borderRadius:2}}>LIVE</span>}
+              {!!(liveData?.[d.key] ?? DATOS_REALES[d.key]) && <span style={{fontSize:8, background:"#2A9D8F", color:"#000", padding:"1px 4px", borderRadius:2}}>LIVE</span>}
             </button>
           ))}
         </div>
@@ -387,7 +387,7 @@ export default function App() {
                       <div style={{fontSize:8, color:"#333", letterSpacing:2, margin:"10px 0 8px"}}>PUNTOS J{idx+1} POR EQUIPO</div>
                       <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:3}}>
                         {equipos
-                          .map(eq => ({eq, pts: DATOS_REALES[divKey]?.[eq.id]?.[idx] ?? 0}))
+                          .map(eq => ({eq, pts: (liveData?.[divKey] ?? DATOS_REALES[divKey])?.[eq.id]?.[idx] ?? 0}))
                           .sort((a, b) => b.pts - a.pts)
                           .map(({eq, pts}) => (
                             <div key={eq.id} style={{display:"flex", alignItems:"center", gap:7, padding:"4px 7px", background:"#0a0a0a", borderRadius:3}}>
