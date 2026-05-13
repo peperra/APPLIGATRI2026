@@ -118,7 +118,9 @@ function calcClasificacion(equipos, jornadas, divKey, liveData) {
   const datos = liveData?.[divKey] ?? DATOS_REALES[divKey];
   return equipos.map(eq => {
     const ptsJ = JORNADAS_DEF.map((_, idx) => {
-      if (datos?.[eq.id]?.[idx] !== undefined) return datos[eq.id][idx] ?? 0;
+            // Solo usar datos reales si algún equipo tiene >0 pts en esa jornada
+      const jornadaJugada = datos && Object.values(datos).some(arr => (arr[idx] ?? 0) > 0);
+      if (jornadaJugada && datos?.[eq.id]?.[idx] !== undefined) return datos[eq.id][idx] ?? 0;
       const pos = jornadas[idx].res[eq.id] ?? 0;
       return getPts(jornadas[idx].tipo, pos);
     });
